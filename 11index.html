@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>今天吃什么</title>
+<style>
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#f6f6f6;
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC",sans-serif;
+}
+.box{
+  background:#fff;
+  padding:30px;
+  width:360px;
+  border-radius:16px;
+  box-shadow:0 20px 40px rgba(0,0,0,.08);
+}
+#result {
+  transition: all 0.3s ease;
+}
+
+.shaking {
+  opacity: 0.6;
+  transform: scale(0.95);
+}
+h1{font-size:20px;margin-bottom:12px}
+select,input,button{
+  width:100%;
+  margin:6px 0;
+  padding:10px;
+  font-size:14px;
+}
+button{
+  background:#000;
+  color:#fff;
+  border:none;
+  border-radius:999px;
+  cursor:pointer;
+}
+button:hover{opacity:.85}
+#result{
+  margin:16px 0;
+  font-size:22px;
+  text-align:center;
+}
+.list{
+  font-size:12px;
+  color:#666;
+  max-height:80px;
+  overflow:auto;
+}
+.item{
+  display:flex;
+  justify-content:space-between;
+}
+.item span{
+  cursor:pointer;
+  color:#999;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+  <h1>今天吃什么</h1>
+
+  <select id="category">
+    <option value="all">全部随机</option>
+    <option value="炒菜">炒菜</option>
+    <option value="主食">主食</option>
+    <option value="小吃">小吃</option>
+    <option value="汤类">汤类</option>
+    <option value="水果">水果</option>
+    <option value="甜点">甜点</option>
+  </select>
+
+  <input id="input" placeholder="添加到当前分类">
+  <button onclick="add()">添加</button>
+
+  <div class="list" id="list"></div>
+
+  <div id="result">点一下</div>
+  <button onclick="decide()">交给命运</button>
+</div>
+
+<script>
+const data = {
+  炒菜: [
+    "宫保鸡丁","鱼香肉丝","回锅肉","红烧肉","糖醋排骨","麻婆豆腐","地三鲜","干煸四季豆","小炒肉","京酱肉丝",
+    "孜然牛肉","葱爆羊肉","辣子鸡","香辣虾","蒜蓉西兰花","番茄炒蛋","红烧茄子","鱼香茄子","黑椒牛柳","蚝油生菜",
+    "清炒虾仁","腰果鸡丁","酱爆鸡丁","酸辣土豆丝","醋溜白菜","蒜薹炒肉","芹菜炒牛肉","青椒肉丝","青椒牛柳","家常豆腐",
+    "韭菜炒蛋","木须肉","干锅花菜","干锅肥肠","干锅鸡","剁椒鱼头","红烧带鱼","清蒸鲈鱼","葱油鸡","口水鸡",
+    "白切鸡","香菇滑鸡","咖喱鸡块","红烧排骨","粉蒸肉","梅菜扣肉","蒜泥白肉","回锅腊肉","腊肉炒蒜苗","腊肠炒饭",
+    "香辣蟹","蒜蓉粉丝虾","铁板牛肉","铁板豆腐","香煎鸡排","煎三文鱼","煎鳕鱼","红酒炖牛肉","黑椒猪排","烤鸡腿",
+    "照烧鸡排","照烧鸡腿","照烧牛肉","黄焖鸡","三杯鸡","盐酥鸡","韩式辣炒鸡","泰式咖喱鸡","日式咖喱牛肉","印度黄咖喱鸡"
+  ],
+
+  主食: [
+    "白米饭","蛋炒饭","扬州炒饭","牛肉饭","咖喱饭","卤肉饭","焗饭","煲仔饭","石锅拌饭","炒饭",
+    "拉面","豚骨拉面","牛肉面","刀削面","炸酱面","拌面","乌冬面","荞麦面","意大利面","通心粉",
+    "焗意面","千层面","披萨","汉堡","三明治","热狗","贝果","可颂","法棍","吐司",
+    "煎饼果子","手抓饼","烤冷面","葱油饼","油条","烧饼","肉夹馍","馅饼","锅盔","馒头",
+    "包子","小笼包","蒸饺","水饺","锅贴","馄饨","抄手","云吞面","米线","过桥米线",
+    "螺蛳粉","酸辣粉","重庆小面","桂林米粉","肠粉","炒河粉","炒米粉","河粉汤","米粉汤","粥"
+  ],
+
+  小吃: [
+    "炸鸡","炸鸡翅","炸鸡腿","炸鸡块","鸡排","盐酥鸡","唐扬鸡","炸猪排","炸牛排","炸虾",
+    "薯条","薯角","洋葱圈","芝士条","炸春卷","炸馄饨","炸年糕","炸丸子","炸豆腐","炸臭豆腐",
+    "章鱼烧","大阪烧","可乐饼","关东煮","串串","烧烤","羊肉串","牛肉串","鸡翅串","鸡皮串",
+    "烤玉米","烤红薯","烤茄子","烤香菇","烤鸡翅","烤鸡腿","烤排骨","烤鱼","烤虾","烤鱿鱼",
+    "生煎","锅贴","烧麦","煎饺","煎包","小笼包","糯米鸡","粽子","麻花","糖葫芦",
+    "驴打滚","炸糕","糍粑","年糕","鸡蛋仔","华夫饼","爆米花","可丽饼","章鱼小丸子","炸热狗"
+  ],
+
+  汤类: [
+    "西红柿鸡蛋汤","紫菜蛋花汤","酸辣汤","鸡汤","老母鸡汤","排骨汤","玉米排骨汤","莲藕排骨汤","冬瓜排骨汤","萝卜排骨汤",
+    "牛肉汤","羊肉汤","牛尾汤","羊蝎子汤","罗宋汤","冬阴功汤","味噌汤","海鲜汤","鱼汤","鲫鱼汤",
+    "酸汤肥牛","金针菇肥牛汤","番茄牛腩汤","咖喱汤","蔬菜汤","菌菇汤","三鲜汤","馄饨汤","云吞汤","面汤",
+    "粥","皮蛋瘦肉粥","海鲜粥","牛肉粥","鸡肉粥","蔬菜粥","南瓜粥","玉米粥","小米粥","八宝粥",
+    "银耳汤","莲子汤","红豆汤","绿豆汤","薏米汤","桂圆红枣汤","酸梅汤","罗汉果汤","椰子鸡汤","胡萝卜玉米汤",
+    "沙参玉竹汤","虫草花鸡汤","木瓜排骨汤","番茄鱼汤","酸菜鱼汤","豆腐汤","海带汤","紫菜虾皮汤","蘑菇汤","奶油蘑菇汤"
+  ],
+
+  水果: [
+    "苹果","梨","香蕉","橙子","橘子","柠檬","葡萄柚","葡萄","草莓","蓝莓",
+    "黑莓","桑葚","樱桃","车厘子","桃子","油桃","李子","杏子","柿子","枣",
+    "火龙果","猕猴桃","芒果","菠萝","菠萝蜜","榴莲","荔枝","龙眼","山竹","杨梅",
+    "枇杷","杨桃","百香果","石榴","无花果","牛油果","木瓜","椰子","甘蔗","莲雾",
+    "释迦","芭乐","甜瓜","香瓜","哈密瓜","西瓜","黄桃","红毛丹","金桔","沙糖桔",
+    "皇帝柑","文旦","脐橙","血橙","青提","红提","白提","黑提","青苹果","蛇果",
+    "沙果","海棠果","蔓越莓","蓝靛果","树莓","酸橙","佛手","罗汉果","橄榄","余甘子"
+  ],
+
+  甜点: [
+    "蛋糕","芝士蛋糕","提拉米苏","慕斯蛋糕","千层蛋糕","布朗尼","瑞士卷","杯子蛋糕","戚风蛋糕","海绵蛋糕",
+    "泡芙","奶油泡芙","巧克力泡芙","蛋挞","葡式蛋挞","曲奇","巧克力曲奇","黄油饼干","马卡龙","司康",
+    "布丁","焦糖布丁","牛奶布丁","巧克力布丁","果冻","水果冻","冰淇淋","雪糕","冰棒","甜筒",
+    "麻薯","糯米糍","大福","年糕","绿豆糕","红豆糕","桂花糕","驴打滚","藕粉","杏仁豆腐",
+    "银耳羹","红豆汤","绿豆汤","酒酿圆子","汤圆","芝麻汤圆","花生汤圆","椰奶西米露","芋圆","双皮奶",
+    "奶昔","酸奶杯","水果捞","拔丝地瓜","香蕉船","苹果派","南瓜派","芝士派","巧克力派","凤梨酥"
+  ]
+};
+
+const listEl = document.getElementById("list");
+const catEl = document.getElementById("category");
+
+function currentList(){
+  if(catEl.value==="all"){
+    return Object.values(data).flat();
+  }
+  return data[catEl.value];
+}
+
+function render(){
+  listEl.innerHTML="";
+  if(catEl.value==="all") return;
+  data[catEl.value].forEach((f,i)=>{
+    const div=document.createElement("div");
+    div.className="item";
+    div.innerHTML=`${f}<span onclick="remove(${i})">×</span>`;
+    listEl.appendChild(div);
+  });
+}
+
+function add(){
+  const v=document.getElementById("input").value.trim();
+  if(!v||catEl.value==="all") return;
+  data[catEl.value].push(v);
+  document.getElementById("input").value="";
+  render();
+}
+
+function remove(i){
+  data[catEl.value].splice(i,1);
+  render();
+}
+
+function decide(){
+  const arr=currentList();
+  if(arr.length===0){
+    document.getElementById("result").innerText="你什么都没给我";
+    return;
+  }
+  document.getElementById("result").innerText=
+    arr[Math.floor(Math.random()*arr.length)];
+}
+
+catEl.onchange=render;
+render();
+</script>
+
+</body>
+</html>
